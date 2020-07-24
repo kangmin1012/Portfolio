@@ -20,7 +20,7 @@
 
 ---
 
-## 프로젝트 소개
+## 1. 프로젝트 소개
 
 - 한 줄 소개 : 고양이 집사들을 위한 똑똑한 기록장
 
@@ -55,7 +55,7 @@ OUNCE는 기존 고양이를 키우는 일명 ‘집사’들을 위한 캣푸�
 
 ---
 
-## 개발 담당 부분
+## 2. 개발 담당 부분
 
 &nbsp;&nbsp;OUNCE 앱을 만들 때 담당한 부분으로는 로그인, 회원가입, 프로필 등록, 메인 화면, 기록하기 기능, Splash화면을 맡아서 담당해서 개발했습니다.\
 리드 개발자로서 코드리뷰를 진행하고, 전체적인 Git관리도 했습니다. 다른 팀원들보다 많은 부분을 맡아 개발했으며, 이 과정에서 많은 삽질이 있었지만 담당했던 뷰와 기능은 전부 완성시켰고, 다른 팀원들의 부분까지 도와줄 수 있어서 3주 동안 진행했던 프로젝트에서 본인의 역할에 충실했다고 생각합니다.
@@ -73,11 +73,11 @@ OUNCE는 기존 고양이를 키우는 일명 ‘집사’들을 위한 캣푸�
 
 ---
 
-### 스플래시 & 로그인
+### 2-1. 스플래시 & 로그인
 
 > #### **Lottie 사용으로 깔끔한 스플래시 화면**
 
-Splash 화면은 Lottie를 사용했습니다.\
+&nbsp;&nbsp;Splash 화면은 Lottie를 사용했습니다.\
 gif를 사용하면 아무래도 화면에 따라서 깨져서 보이기 때문에 좀 더 깔끔함과 부드러움을 가지고 있는 Lottie 파일을 적용했습니다.\
 그리고 풀 스크린 효과를 통해 Splash에 집중할 수 있도록 구성했고, 마지막으로 Thread를 이용해 3초간 딜레이를 건 다음 로그인 화면으로 이동하게 됩니다.
 
@@ -114,4 +114,204 @@ class SplashActivity : AppCompatActivity() {
 }
 ```
 
-<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88373022-05104500-cdd2-11ea-85c2-dcdc078afb10.gif" width="40%"></p>
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88373022-05104500-cdd2-11ea-85c2-dcdc078afb10.gif" width="30%"></p>
+
+> #### **아이디 비밀번호 입력에 따른 버튼 활성화 및 알림 문구**
+
+&nbsp;&nbsp;로그인 화면에서 가장 신경 쓴 것은 사용자가 아이디 비밀번호를 입력하는 것에 따라서 로그인 버튼을 활성화 시키는 부분이었습니다.\
+아이디 패스워드 EditTextView에 텍스트의 변화를 감지하는 리스너를 달고, 두 곳 다 빈칸이 아니라면 로그인 버튼을 활성화 시켰습니다.\
+여기서 텍스트 변화를 감지하는 리스너는 코틀린의 확장함수를 통해 구현했고, 회원가입, 프로필 등록 화면에서도 계속해서 사용했습니다.
+
+```
+fun EditText.textCheckListener(textCheck: (CharSequence?) -> Unit) {
+    this.addTextChangedListener(object : TextWatcher {
+        override fun afterTextChanged(s: Editable?) {
+        }
+
+        override fun beforeTextChanged(
+            s: CharSequence?,
+            start: Int,
+            count: Int,
+            after: Int
+        ) = Unit
+
+        override fun onTextChanged(
+            s: CharSequence?,
+            start: Int,
+            before: Int,
+            count: Int
+        ) {
+            textCheck(s)
+        }
+    })
+}
+```
+
+_textCheckListener 확장 함수_
+
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88380182-07c56700-cddf-11ea-92dd-ec51af66a3d3.PNG" width="30%">
+<img src="https://user-images.githubusercontent.com/55642709/88380234-23c90880-cddf-11ea-8d76-e57df639e5ab.PNG" width="30%"></p>
+
+_로그인 버튼 활성화 및 잘못 입력했을 때 반응_
+
+> #### **Ted Park님의 EditText 커스텀을 이용한 글씨 감지**
+
+&nbsp;&nbsp;EditText는 기존 안드로이드에서 제공해주는 뷰가 아니라 Ted Park님께서 커스텀 하신 EditText를 참고하여 사용하였습니다.\
+그 이유는 뷰에 글씨가 감지 되었을 때 우측에 x표시가 뜨고, 그 버튼을 누르면 전체 내용이 지워지는 기능이 필요한데 해당 코드가 이에 부합하다고 생각했기 때문입니다.
+
+- [_ClearEditText.kt_](https://github.com/We-are-Ounce/OUNCE_Android/blob/master/app/src/main/java/com/sopt/ounce/util/ClearEditText.kt)
+
+---
+
+### 2-2 회원가입
+
+> #### **뷰페이저를 커스텀하여 애니메이션 대체**
+
+&nbsp;&nbsp;회원가입과 프로필 화면은 둘 다 단계별로 사용자에게 정보를 입력받습니다.  
+단계별로 입력을 받기 때문에 다음 단계로 넘어갈 때 화면의 자연스러움을 주기 위해서 애니메이션을 먼저 떠올렸습니다.  
+각각의 단계를 프래그먼트로 만들어 애니메이션을 적용시켜 줄 수도 있었으나, 뷰페이저가 떠오르게 되었고, 좀 더 자연스러운 애니메이션을 제공해준다고 생각하여 뷰페이저를 사용하게 되었습니다.
+
+&nbsp;&nbsp;정보 입력 시 다음 단계로 넘어갈 때의 조건은 다음과 같습니다.
+
+- 모든 항목을 입력 전 까지는 이동 할 수 없다.
+- 뷰페이저가 스와이프 돼서는 안된다.
+- 인디케이터를 눌러도 이동 되면 안된다.
+
+해당 조건을 만족시키기 위해서 뷰페이저를 직접 커스텀하였고, 애니메이션 이동 속도가 너무 빨라서 페이지가 변경되는 애니메이션 속도를 조절하였습니다.
+
+- [_스와이프 되지 않는 뷰페이저_](https://github.com/We-are-Ounce/OUNCE_Android/blob/master/app/src/main/java/com/sopt/ounce/util/NoSwipeViewPager.kt)
+
+- [_뷰페이저 이동속도 조절하는 코드_](https://github.com/We-are-Ounce/OUNCE_Android/blob/master/app/src/main/java/com/sopt/ounce/util/FixedSpeedScroller.kt)
+
+각 단계별로 모든 항목을 입력 할 때 까지 다음으로 이동할 수 없기 때문에, 로그인 버튼과 마찬가지로  
+EditText에 checkListener를 추가해 전부 다 작성했는지 판단하여 버튼을 활성화 하도록 만들었습니다.  
+이 때 '다음' 버튼은 activity 상에 존재하고 있고, EditText는 프래그먼트에 존재하기 때문에  
+프래그먼트에서 액티비티에 접근하여 '다음'버튼을 활성화 시켰습니다.
+
+#
+
+_프래그먼트 내 액티비티 접근 함수_
+
+```
+ private fun checkCode() {
+        if (mCode == v.edt_email_number.text.toString().toInt()) {
+            v.txt_email_failcheck.text = "인증이 완료되었습니다."
+            v.txt_email_failcheck.visibility = View.VISIBLE
+            "UserInfoCheck".showLog(mEmail)
+            UserInfoObject.email = mEmail
+            "UserInfoCheck".showLog("${UserInfoObject.email}")
+            mActivity.buttonEnable(true)
+        }
+
+        ...
+ }
+```
+
+_액티비티에 있는 buttonEnable() 함수_
+
+```
+//확인 버튼 클릭 활성화
+@Suppress("DEPRECATION")
+fun buttonEnable(enable: Boolean) {
+    if (enable) {
+        btn_signup_ok.apply {
+            isEnabled = true
+            setTextColor(resources.getColor(R.color.white))
+        }
+    } else {
+        btn_signup_ok.apply {
+            isEnabled = false
+            setTextColor(resources.getColor(R.color.greyish_two))
+        }
+    }
+
+}
+```
+
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88384043-a43f3780-cde6-11ea-8dad-2dcc49970435.gif" width="30%"></p>
+
+> #### **6자리 난수를 이용한 이메일 인증**
+
+&nbsp;&nbsp;회원가입에서 이메일을 인증하는 부분이 있습니다.  
+6자리 난수를 생성해 이메일 주소와 함께 서버에 보내면, 서버에서 해당 이메일로  
+난수를 그대로 보내줍니다. 그러면 사용자는 메일을 보고 6자리 숫자를 입력하는데,  
+내부적으로 해당 6자리 숫자를 가지고 있다가 사용자가 입력하는 숫자와 대입해 같을 경우  
+다음 단계로 넘어갈 수 있게 활성화 시켰습니다.
+
+_서버통신으로 이메일에 인증코드를 보내는 함수_
+
+```
+    // 이메일에 인증번호를 보내는 버튼 누를 때 호출
+    private fun checkEmail() {
+        mEmail = v.edt_email.text.toString()
+
+        //6자리 난수 생성
+        mCode = (100000..999999).random()
+        v.txt_email_failsend.text = "인증번호를 발송했습니다."
+        v.txt_email_failsend.visibility = View.VISIBLE
+
+        val request = EmailCheckServiceImpl
+        request.service.postEmail(
+            RequestEmailData(
+                v.edt_email.text.toString(),
+                "OUNCE 회원가입 인증해주세요.",
+                "인증번호를 입력해주세요 : $mCode"
+            )
+        ).customEnqueue(
+            onSuccess = {
+                "MailSuccess".showLog("${it.message}")
+
+            }
+        )
+
+    }
+```
+
+_사용자가 인증번호를 입력해서 맞는지 비교하는 함수_
+
+```
+    // 이메일에서 받은 인증코드를 입력하는 버튼 누를 때 호출
+    private fun checkCode() {
+        if (mCode == v.edt_email_number.text.toString().toInt()) {
+            v.txt_email_failcheck.text = "인증이 완료되었습니다."
+            v.txt_email_failcheck.visibility = View.VISIBLE
+            "UserInfoCheck".showLog(mEmail)
+            UserInfoObject.email = mEmail
+            "UserInfoCheck".showLog("${UserInfoObject.email}")
+            mActivity.buttonEnable(true)
+        }
+        else {
+            v.edt_email_number.background.setColorFilter(
+                resources.getColor(R.color.dark_peach),
+                PorterDuff.Mode.SRC_IN
+            )
+            v.txt_email_failcheck.text = "인증번호가 틀렸습니다."
+            v.txt_email_failcheck.visibility = View.VISIBLE
+        }
+    }
+```
+
+_Retrofit2 서버통신 확장 함수_
+
+```
+fun <ResponseType> Call<ResponseType>.customEnqueue(
+    onFaile: () -> Unit = { "OunceServerStatus".showLog("통신 실패") },
+    onSuccess: (ResponseType) -> Unit,
+    onError: (Response<ResponseType>) -> Unit = {}
+) {
+    this.enqueue(object : Callback<ResponseType> {
+        override fun onFailure(call: Call<ResponseType>, t: Throwable) {
+            "OunceServerStatus".showLog("ServerFail : ${t.message}")
+            onFaile()
+        }
+
+        override fun onResponse(call: Call<ResponseType>, response: Response<ResponseType>) {
+            response.takeIf { it.isSuccessful }
+                ?.body()
+                ?.let{
+                    onSuccess(it)
+                } ?: onError(response)
+        }
+    })
+}
+```
