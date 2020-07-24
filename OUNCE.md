@@ -60,7 +60,7 @@ OUNCE는 기존 고양이를 키우는 일명 ‘집사’들을 위한 캣푸�
 &nbsp;&nbsp;OUNCE 앱을 만들 때 담당한 부분으로는 로그인, 회원가입, 프로필 등록, 메인 화면, 기록하기 기능, Splash화면을 맡아서 담당해서 개발했습니다.\
 리드 개발자로서 코드리뷰를 진행하고, 전체적인 Git관리도 했습니다. 다른 팀원들보다 많은 부분을 맡아 개발했으며, 이 과정에서 많은 삽질이 있었지만 담당했던 뷰와 기능은 전부 완성시켰고, 다른 팀원들의 부분까지 도와줄 수 있어서 3주 동안 진행했던 프로젝트에서 본인의 역할에 충실했다고 생각합니다.
 
-> ### **눈으로 보이는 디자인에 신경 쓰다.**
+> #### **눈으로 보이는 디자인에 신경 쓰다.**
 
 &nbsp;&nbsp;이번 프로젝트에서 가장 신경 썼던 부분은 실제 사용자가 눈으로 보는 화면이었습니다.\
 개발 코드 내부적으로 최적화 시키고, 여러 디자인 패턴들을 사용해 독립성, 확장성을 넓히는 방향의 개발도 중요하지만 실제 사용자 눈에 보이는 화면이 모든 것을 보여주기 때문에 이 부분에 있어서 더 신경을 썼습니다.\
@@ -70,3 +70,48 @@ OUNCE는 기존 고양이를 키우는 일명 ‘집사’들을 위한 캣푸�
 <p align="center"><img src="https://user-images.githubusercontent.com/55642709/88371652-6d115c00-cdcf-11ea-8466-6c29ab8d9e03.png">
 <img src="https://user-images.githubusercontent.com/55642709/88371717-8b775780-cdcf-11ea-9952-8ab72d90b18d.png">
 <img src="https://user-images.githubusercontent.com/55642709/88371767-9f22be00-cdcf-11ea-944d-0b0b7384e25f.png"></p>
+
+---
+
+### 스플래시 & 로그인
+
+> #### **Lottie 사용으로 깔끔한 스플래시 화면**
+
+Splash 화면은 Lottie를 사용했습니다.\
+gif를 사용하면 아무래도 화면에 따라서 깨져서 보이기 때문에 좀 더 깔끔함과 부드러움을 가지고 있는 Lottie 파일을 적용했습니다.\
+그리고 풀 스크린 효과를 통해 Splash에 집중할 수 있도록 구성했고, 마지막으로 Thread를 이용해 3초간 딜레이를 건 다음 로그인 화면으로 이동하게 됩니다.
+
+```
+class SplashActivity : AppCompatActivity() {
+
+    val handler = Handler(Looper.getMainLooper())
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_splash)
+
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
+                // Set the content to appear under the system bars so that the
+                // content doesn't resize when the system bars hide and show.
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                // Hide the nav bar and status bar
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN)
+
+
+        img_splash.setAnimation("splash.json")
+        img_splash.playAnimation()
+
+
+        val thread = Thread2()
+        thread.start()
+    }
+
+    ...
+
+}
+```
+
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88373022-05104500-cdd2-11ea-85c2-dcdc078afb10.gif" width="50%"></p>
