@@ -114,4 +114,4 @@ class SplashActivity : AppCompatActivity() {
 }
 ```
 
-<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88373022-05104500-cdd2-11ea-85c2-dcdc078afb10.gif" width="50%"></p>
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88373022-05104500-cdd2-11ea-85c2-dcdc078afb10.gif" width="40%"></p>
