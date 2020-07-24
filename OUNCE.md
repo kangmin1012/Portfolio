@@ -122,6 +122,8 @@ class SplashActivity : AppCompatActivity() {
 아이디 패스워드 EditTextView에 텍스트의 변화를 감지하는 리스너를 달고, 두 곳 다 빈칸이 아니라면 로그인 버튼을 활성화 시켰습니다.\
 여기서 텍스트 변화를 감지하는 리스너는 코틀린의 확장함수를 통해 구현했고, 회원가입, 프로필 등록 화면에서도 계속해서 사용했습니다.
 
+_textCheckListener 확장 함수_
+
 ```
 fun EditText.textCheckListener(textCheck: (CharSequence?) -> Unit) {
     this.addTextChangedListener(object : TextWatcher {
@@ -147,12 +149,10 @@ fun EditText.textCheckListener(textCheck: (CharSequence?) -> Unit) {
 }
 ```
 
-_textCheckListener 확장 함수_
+_로그인 버튼 활성화 및 잘못 입력했을 때 반응_
 
 <p align="center"><img src="https://user-images.githubusercontent.com/55642709/88380182-07c56700-cddf-11ea-92dd-ec51af66a3d3.PNG" width="30%">
 <img src="https://user-images.githubusercontent.com/55642709/88380234-23c90880-cddf-11ea-8d76-e57df639e5ab.PNG" width="30%"></p>
-
-_로그인 버튼 활성화 및 잘못 입력했을 때 반응_
 
 > #### **Ted Park님의 EditText 커스텀을 이용한 글씨 감지**
 
@@ -187,8 +187,6 @@ _로그인 버튼 활성화 및 잘못 입력했을 때 반응_
 EditText에 checkListener를 추가해 전부 다 작성했는지 판단하여 버튼을 활성화 하도록 만들었습니다.  
 이 때 '다음' 버튼은 activity 상에 존재하고 있고, EditText는 프래그먼트에 존재하기 때문에  
 프래그먼트에서 액티비티에 접근하여 '다음'버튼을 활성화 시켰습니다.
-
-#
 
 _프래그먼트 내 액티비티 접근 함수_
 
@@ -233,8 +231,8 @@ fun buttonEnable(enable: Boolean) {
 > #### **6자리 난수를 이용한 이메일 인증**
 
 &nbsp;&nbsp;회원가입에서 이메일을 인증하는 부분이 있습니다.  
-6자리 난수를 생성해 이메일 주소와 함께 서버에 보내면, 서버에서 해당 이메일로  
-난수를 그대로 보내줍니다. 그러면 사용자는 메일을 보고 6자리 숫자를 입력하는데,  
+6자리 난수를 생성해 이메일 주소와 함께 서버에 보내면, 서버에서 해당 이메일로 난수를 그대로 보내줍니다.  
+그러면 사용자는 메일을 보고 6자리 숫자를 입력하는데,  
 내부적으로 해당 6자리 숫자를 가지고 있다가 사용자가 입력하는 숫자와 대입해 같을 경우  
 다음 단계로 넘어갈 수 있게 활성화 시켰습니다.
 
