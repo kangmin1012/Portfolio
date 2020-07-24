@@ -67,8 +67,6 @@ OUNCE는 기존 고양이를 키우는 일명 ‘집사’들을 위한 캣푸�
 디자이너가 만든 UI/UX를 최대한 충실히 따르기 위해 노력했으며 회원가입 및 프로필 등록 단계에서 ViewPager를 커스텀 해 다음 단계로 넘어갈 때마다 페이지가 자연스럽게 전환되는 효과를 만들었습니다.\
 그리고 사용자가 입력하는 정보에 대해서 밑줄 색 변경, 알림 문구 등 작성한 방식, 길이에 따라서 실시간으로 적용되게 만들었으며, 메인 화면 부분도 최대한 iOS어플 같은 느낌을 살리기 위해 노력했습니다.
 
-\
-\
-<img src="https://user-images.githubusercontent.com/55642709/88371652-6d115c00-cdcf-11ea-8466-6c29ab8d9e03.png">
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88371652-6d115c00-cdcf-11ea-8466-6c29ab8d9e03.png">
 <img src="https://user-images.githubusercontent.com/55642709/88371717-8b775780-cdcf-11ea-9952-8ab72d90b18d.png">
-<img src="https://user-images.githubusercontent.com/55642709/88371767-9f22be00-cdcf-11ea-944d-0b0b7384e25f.png">
+<img src="https://user-images.githubusercontent.com/55642709/88371767-9f22be00-cdcf-11ea-944d-0b0b7384e25f.png"></p>
