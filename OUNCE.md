@@ -2,15 +2,15 @@
 
 ## 목차
 
-1. [프로젝트 소개](#프로젝트-소개)
+1. [프로젝트 소개](#1.-프로젝트-소개)
 
-2. [개발 담당 부분](#개발-담당-부분)
+2. [개발 담당 부분](#2.-개발-담당-부분)
 
-   2-1. [스플래시 & 로그인](#스플래시-&-로그인)
+   2-1. [스플래시 & 로그인](#2-1.-스플래시-&-로그인)
 
-   2-2. [회원가입](#회원가입)
+   2-2. [회원가입](#2-2.-회원가입)
 
-   2-3. [프로필 등록](#프로필-등록)
+   2-3. [프로필 등록](#2-3.-프로필-등록)
 
    2-4. [메인 화면](#메인-화면)
 
@@ -163,7 +163,7 @@ _로그인 버튼 활성화 및 잘못 입력했을 때 반응_
 
 ---
 
-### 2-2 회원가입
+### 2-2. 회원가입
 
 > #### **뷰페이저를 커스텀하여 애니메이션 대체**
 
@@ -311,5 +311,147 @@ fun <ResponseType> Call<ResponseType>.customEnqueue(
                 } ?: onError(response)
         }
     })
+}
+```
+
+### 2-3. 프로필 등록
+
+#### **프로필 이미지 서버 업로드 MultipartBody.Part 이용**
+
+&nbsp;&nbsp;앱에서 회원가입을 하게 되면 본인이 키우고 있는 고양이 프로필을 등록 하게 됩니다.  
+고양이의 정보를 입력 받는 것은 크게 어렵지 않았으나, 가장 큰 문제는 이미지를 서버에 업로드 하는 일이었습니다.  
+지금까지 서버에서 주는 url을 `Glide`로 이용해 처리하기만 했는데  
+이번에는 내 로컬에 있는 이미지를 가져와 서버에 업로드해야 했기 때문에 새로운 시도였습니다.  
+한 번도 해본 적 없는 작업이었기에 구글링을 통해 공부했고, `MultipartBody.Part`를 이용하면 가능하다는 것을 배웠습니다.  
+먼저 interface에 `@Multipart` 어노테이션을 지정해주고, 이미지는 `MultipartBody.Part` 타입으로, 나머지 고양이 정보는 `HashMap` 타입으로 request를 보냈습니다.
+
+_Multipart를 이용한 서버 통신 인터페이스_
+
+```
+@Multipart
+@POST("profile/register")
+fun postCatProfile(
+    @Header("token") token: String,
+    @Part profileImg: MultipartBody.Part,
+    @PartMap body: HashMap<String, RequestBody>
+): Call<ResponseCatProfileData>
+```
+
+기존과는 다른 서버 통신이었기 때문에 request에 들어가는 String 값들을 **MIME Type**으로 변형 시켰고,  
+이미지 또한 `MultipartBody.Part` 타입으로 변환시켜 주었습니다.
+
+_Multpart로 고양이 프로필 등록을 서버에 요청하는 함수_
+
+```
+private fun settingDataMultiForm() {
+    val PARSE_STRING = "text/plain"
+    val pictureRb = settingImgMultiPart()
+    val accessToken = EasySharedPreference.Companion.getString("accessToken", "")
+    val name = RequestBody.create(MediaType.parse(PARSE_STRING), CatInfoData.profileName)
+    val weight = RequestBody.create(MediaType.parse(PARSE_STRING), CatInfoData.profileWeight)
+    val gender = RequestBody.create(MediaType.parse(PARSE_STRING), CatInfoData.profileGender)
+    val neutral = RequestBody.create(MediaType.parse(PARSE_STRING), CatInfoData.profileNeutral)
+    val age = RequestBody.create(MediaType.parse(PARSE_STRING), CatInfoData.profileAge)
+    val info = RequestBody.create(MediaType.parse(PARSE_STRING), CatInfoData.profileInfo)
+
+    mOunce.SERVICE.postCatProfile(
+        token = accessToken,
+        profileImg = pictureRb,
+        body = hashMapOf<String, RequestBody>(
+            "profileName" to name,
+            "profileWeight" to weight,
+            "profileGender" to gender,
+            "profileNeutral" to neutral,
+            "profileAge" to age,
+            "profileInfo" to info
+        )
+    ).customEnqueue(
+        onSuccess = {
+            "OunceCatRegisterSuccess".showLog("CatRegisterOk")
+            val intent = Intent(this,CatRegisterFinishActivity::class.java)
+            startActivity(intent)
+            finish()
+        },
+        onError = {
+            "ServerError".showLog("고양이 프로필 등록 에러 : ${it.code()}")
+            Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show()
+        }
+    )
+}
+```
+
+_갤러리에서 가져온 사진을 `MultipartBody.Part`타입으로 변환 하는 함수_
+
+```
+private fun settingImgMultiPart(): MultipartBody.Part {
+    val options = BitmapFactory.Options()
+    val inputStream = contentResolver.openInputStream(CatInfoData.catProfileUri!!)!!
+    val bitmap = BitmapFactory.decodeStream(inputStream, null, options)
+    val byteArrayOutputStream = ByteArrayOutputStream()
+    bitmap!!.compress(Bitmap.CompressFormat.JPEG, 20, byteArrayOutputStream)
+    val photoBody =
+        RequestBody.create(MediaType.parse("image/jpg"),byteArrayOutputStream.toByteArray())
+
+    return MultipartBody.Part.createFormData(
+        "profileImg",
+        File(CatInfoData.catProfileUri.toString()).name,
+        photoBody)
+}
+```
+
+프로필 이미지는 갤러리에서 불러 온 후 Crop 기능이 필요했기 때문에 [Cropper](https://github.com/ArthurHub/Android-Image-Cropper) 라이브러리를 이용했습니다.  
+갤러리에 접근 시 권한을 설정해줘야 하기 때문에 좀 더 쉽게 권한 설정을 하기 위해서  
+[TedPermission](https://github.com/ParkSangGwon/TedPermission) 라이브러리를 사용했습니다.
+
+_CatProfileRegisterFragment.kt_
+
+```
+private fun settingPermission() {
+    val permis = object : PermissionListener {
+        override fun onPermissionGranted() {
+            // 갤러리 호출
+            callGallery()
+        }
+
+        override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
+        }
+    }
+
+    TedPermission.with(mContext)
+        .setPermissionListener(permis)
+        .setRationaleMessage("갤러리 호출을 위해 권한을 설정해 주세요.")
+        .setDeniedMessage("갤러리 권한은 기기 시스템 설정에서 변경 할 수 있습니다.")
+        .setPermissions(
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ).check()
+}
+```
+
+```
+private fun callGallery() {
+    CropImage.activity()
+        .setGuidelines(CropImageView.Guidelines.ON)
+        .setAspectRatio(4, 3)
+        .start(mContext, this)
+}
+
+@SuppressLint("Recycle")
+@Suppress("DEPRECATION")
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+
+    if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+        val result = CropImage.getActivityResult(data)
+        if (resultCode == Activity.RESULT_OK) {
+            mSelectedImage = result.uri
+            Glide.with(this)
+                .load(mSelectedImage).thumbnail(0.1f).into(v.img_cat_profile)
+
+
+            CatInfoData.catProfileUri = mSelectedImage
+            "ShowCatProfileUri".showLog("${CatInfoData.catProfileUri.toString()}")
+            checkText()
+        }
+    }
 }
 ```
