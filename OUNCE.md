@@ -12,11 +12,13 @@
 
    2-3. [프로필 등록](#2-3-프로필-등록)
 
-   2-4. [메인 화면](#메인-화면)
+   2-4. [메인 화면](#2-4-메인-화면)
 
-   2-5. [기록하기](#기록하기)
+   2-5. [다른 고양이 프로필](#2-5-다른-고양이-프로필)
 
-3. [후기 및 발전](#후기-및-발전)
+   2-6. [리뷰 수정,삭제](#2-6-리뷰-수정,삭제)
+
+3. [후기 및 발전](#3-후기-및-발전)
 
 ---
 
@@ -455,3 +457,370 @@ override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) 
     }
 }
 ```
+
+### 2-3. 메인 화면
+
+> #### **BottomAppBar 사용과 StickyScrollView**
+
+&nbsp;&nbsp;앱에서 제일 중요하다고 여겨지는 메인 화면 입니다.  
+보통은 `BottomNavigationView`를 사용하여 메인 화면을 구성하는데 디자이너들이 원하는 화면을 구성하기 위해 이번에는 `BottomAppBar`를 사용해 보았습니다.  
+처음 사용해보는 기능이었기에 많이 헤맸지만, 구글링을 통해 속성값과 특성을 파악하고 마지막에  
+디자이너들이 제시한 화면의 요구사항을 충족시킬 수 있었습니다.
+
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88534812-d13c5600-d043-11ea-9922-0666dd972e08.PNG" width="30%"></p>
+
+&nbsp;&nbsp; 디자이너들의 또 하나의 요구사항은 아래로 스크롤 시 리뷰가 헤더에 붙어서  
+내용들만 스크롤 되게 하는 것이었습니다. 이 부분은 외부 라이브러리인 [StickyScrollView](https://github.com/didikk/sticky-nestedscrollview)를 이용하여 구현하였습니다.
+
+_fragment_home.xml_
+
+```
+<me.didik.component.StickyNestedScrollView
+        android:id="@+id/sticky_scroll_main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        ...
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layout_main_review_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@color/white"
+            android:tag="sticky"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/layout_main_profile">
+
+        ...
+```
+
+<p align="center"><img src ="https://user-images.githubusercontent.com/55642709/88535367-b7e7d980-d044-11ea-9d0f-5cd56be8a885.gif" width="30%"></p>
+
+> #### **다른 프로필로 전환**
+
+&nbsp;&nbsp;여러 마리의 고양이를 키우는 집사의 경우도 생각해서 한 계정당 여러 개의 고양이 프로필을 만들 수 있습니다.
+현재 프로필의 이름 또는 화살표 아이콘을 클릭 하면 바텀시트로 현재 내 계정의 다른 고양이 프로필을 볼 수 있고,  
+다른 프로필을 누르면 해당 프로필로 메인 화면이 구성된다. 맨 하단에는 새로운 고양이 프로필을 등록할 수 있으며  
+최대 4마리의 고양이 프로필만 등록 가능하게 구현했습니다.
+
+_HomeFragment.kt_
+
+```
+    @Suppress("DEPRECATION")
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        v = inflater.inflate(R.layout.fragment_home, container, false)
+
+        ...
+
+        //바텀시트 프로필 설정
+        mBottomsheetProfile.setContentView(R.layout.profile_bottomsheet)
+
+        ...
+
+        //다른프로필 바텀 시트 세팅
+        mBottomsheetProfile.rcv_bottom_profile.apply {
+            adapter = mProfileAdapter
+            layoutManager = LinearLayoutManager(mContext)
+        }
+        initBottomSheet()
+
+
+        return v
+
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        ...
+
+        //고양이 이름 옆 아이콘 클릭 시 다른 고양이 프로필 선택 창 생성
+        img_main_profile_dropdown.setOnClickListener {
+            showBottomSheet()
+        }
+
+        txt_main_profile.setOnClickListener {
+            showBottomSheet()
+        }
+
+        ...
+    }
+```
+
+```
+private fun initBottomSheet(){
+    val accessToken = EasySharedPreference.Companion.getString("accessToken", "")
+
+    // 다른 계정 클릭 시 이벤트
+    mProfileAdapter.setOnItemClickListener(object : BottomProfileAdapter.OnItemClickListener {
+        @Suppress("DEPRECATION")
+        override fun onItemClick(v: View, data: BottomProfileData.Data) {
+            EasySharedPreference.Companion.putInt("profileIdx", data.profileIdx)
+            val activity = activity as MainActivity
+            activity.resetFragment(data.profileIdx)
+            mBottomsheetProfile.dismiss()
+        }
+    })
+
+    //계정추가 버튼 및 판단하는 클릭 리스너
+    mBottomsheetProfile.layout_bottomsheet_add_profile.setOnClickListener {
+        mOunce.SERVICE.postIsLimit(accessToken).customEnqueue(
+            onSuccess = {
+                it.data.let { data ->
+                    if (data.possibleAddProfile) {
+                        val intent = Intent(mContext, CatRegisterActivity::class.java)
+                        startActivity(intent)
+                    } else {
+                        Toast.makeText(
+                            mContext,
+                            "최대 4개의 계정만 만들 수 있습니다.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            },
+            onError = {
+                "OunceMainBottomProfileServerError".showLog("프로필 추가 생성 오류")
+            }
+        )
+    }
+}
+```
+
+```
+private fun showBottomSheet() {
+    val accessToken = EasySharedPreference.Companion.getString("accessToken", "")
+
+    mOunce.SERVICE.getConversionProfile(accessToken,mProfileIdx).customEnqueue(
+        onSuccess = {
+            "OunceStatus".showLog("프로필 바텀시트 호출 메세지 : ${it.message}")
+            "OunceStatus".showLog("프로필 바텀시트 데이터 전달 \n ${it.data}")
+            mProfileAdapter.data.clear()
+            mProfileAdapter.data.addAll(it.data)
+            mProfileAdapter.notifyDataSetChanged()
+        },
+        onError = {
+            "OunceError".showLog("프로필 바텀시트 호출 오류")
+        }
+    )
+
+    mBottomsheetProfile.show()
+
+}
+```
+
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88537203-18c4e100-d048-11ea-9a26-b5e4658bdb72.gif" width="30%"></p>
+
+> #### **리뷰필터 역시 바텀 시트로 구성**
+
+&nbsp;&nbsp;리뷰 타이틀바에서 우측 아이콘을 클릭하면 리뷰 필터가 바텀시트로 보여지게 됩니다.  
+원하는 필터를 설정하고 선택완료를 누르면 필터가 적용된 리뷰들이 보이게 됩니다.  
+서버에서 주재료,제조사 필터는 사용자가 작성한 제품 리뷰 카테고리들만 가져오게 되어 있어서,  
+필터의 양이 많아지면 바텀 시트에서 스크롤이 될 수 있습니다.  
+여기서 아쉬웠던 점은 바텀시트를 스크롤해서 필터를 설정하고 다시 선택완료를 누르려고  
+화면 위로 스크롤 할 때 바텀시트가 닫혀버리는 현상을 잡을 수가 없던 점이었습니다.
+
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88538008-963d2100-d049-11ea-98a4-026e1c463312.gif" width="30%"></p>
+
+> #### **스피너를 이용한 리뷰 정렬**
+>
+> &nbsp;&nbsp; 리뷰 정렬 목록은 스피너로 구성했습니다.  
+> 가장 대중적인 방법으로 날짜 순, 총점 순, 기호도 순 문자열을 `<string-array>`태그로 감싸 *strings.xml*에 작성하고,  
+> 메인 코드에서 가져와 사용하는 방식으로 스피너를 구현해 보았습니다.
+
+_strings.xml_
+
+```
+<resources>
+    ...
+
+    <string-array name="main_review_array">
+        <item>날짜 순</item>
+        <item>총점 순</item>
+        <item>기호도 순</item>
+    </string-array>
+</resources>
+```
+
+_HomeFragment.kt_
+
+```
+@Suppress("DEPRECATION")
+@SuppressLint("ClickableViewAccessibility")
+override fun onCreateView(
+    inflater: LayoutInflater, container: ViewGroup?,
+    savedInstanceState: Bundle?
+): View? {
+
+    ...
+
+        // 스피너 설정
+    val spinnerAdapter = ArrayAdapter(
+        mContext,
+        R.layout.main_custom_spinner, mItem
+    )
+
+    spinnerAdapter.setDropDownViewResource(R.layout.main_custom_dropdown)
+    v.spinner_main.apply {
+        adapter = spinnerAdapter
+        onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(p0: AdapterView<*>?) {
+            }
+
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+
+                when (parent?.getItemAtPosition(position).toString()) {
+                    "날짜 순" -> {
+                        mRecyclerAdapter.data.clear()
+                        startServerReviewDate()
+                    }
+
+                    "총점 순" -> {
+                        mRecyclerAdapter.data.clear()
+                        startServerReviewRating()
+                    }
+
+                    "기호도 순" -> {
+                        mRecyclerAdapter.data.clear()
+                        startServerReviewPrefer()
+                    }
+
+                }
+            }
+        }
+    }
+
+    ...
+}
+
+```
+
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88538480-6cd0c500-d04a-11ea-9917-0f0f3d649f0a.gif" width="30%"></p>
+
+### 2-5. 다른 고양이 프로필
+
+> #### **팔로잉 팔로워만 다르고 나머지는 동일**
+
+&nbsp;&nbsp;내 계정의 고양이 프로필이 아닌 다른 계정의 고양이 프로필로 접근 시 보여지는 화면은 전체적으로 동일하나 팔로우 기능 부분만 다르게 구성되어 있습니다.  
+처음 액티비티에 접근 할 때 내 프로필 계정이 팔로우 했는지를 서버로 부터 값을 받아와서  
+화면에 보여지는 팔로우 버튼을 다르게 합니다. 이 과정에서 드로어블을 사용해 좀 더 편하게  
+뷰를 변화 시킬 수 있었습니다. 버튼을 누르면 팔로우 또는 팔로우 취소 이벤트를 서버로 전송하게 됩니다.
+
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88539976-2af54e00-d04d-11ea-93b2-6b780595a12f.PNG" width="30%"></p>
+
+### 2-6. 리뷰 수정,삭제
+
+> #### **내 리뷰만 수정/삭제 버튼 활성화 다른 사람의 리뷰는 읽기 전용**
+
+&nbsp;&nbsp;기록하기는 다른 파트원의 부분이었습니다. 담당하던 팀원이 기록하기 화면에서 어려움을 겪었기 때문에 중간 부분부터 같이 만들기 시작했습니다.  
+팀원이 어려워 하던 부분은 다음과 같았습니다.
+
+- 내가 리뷰한 기록하기 화면에서만 수정/삭제 버튼 활성화
+
+- 수정 버튼을 누르기 전까지는 화면에 변화가 일어나서는 안된다.
+
+먼저 리사이클러 뷰 아이템에 해당 리뷰를 작성한 계정의 인덱스 값이 존재합니다.  
+아이템 클릭 시 `SharedPreference`에 저장되어 있는 계정 인덱스 값과 같다면 `intent`를 통해  
+*True*값을 전달하고 그렇지 않다면 *False*값을 전달합니다.  
+전달되는 값에 따라서 상단 타이틀의 값을 다르게 주고, *True*일 경우에만 수정,삭제 버튼을 활성화 시킵니다.  
+수정,삭제 버튼은 `PopupMenu`를 통해 구현했습니다.
+
+_RecordModifyActivity.kt_
+
+```
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_record_modify)
+
+    StatusObject.setStatusBar(this)
+
+    val intent = intent
+    mReviewIdx = intent.getIntExtra("reviewIdx", 0)
+
+    val isMe = intent.getBooleanExtra("isMy", true)
+
+    if (isMe) {
+        //내 리뷰 프로필이면 상단 텍스트 이름 변경
+        txt_update_myrecord.text = "나의 기록"
+        btn_record_popup.visibility = View.VISIBLE
+    } else {
+        txt_update_myrecord.text = "제품 리뷰"
+    }
+
+    enableChange(false, layout_modify_parent)
+
+    ...
+
+}
+```
+
+처음 화면에서는 수정 버튼을 누르기 전까지는 화면에 변화가 일어나서는 안되기 때문에  
+모든 뷰들의 enable 속성을 *False*로 설정해 줍니다. 이 때 수정 삭제 버튼이 있는 앱바 부분은  
+클릭 이벤트가 활성화 되어야 하므로, 그 부분만을 제외하고 설정해 줍니다.  
+초기 화면에서는 수정 완료 버튼을 숨기고, 수정 버튼을 누르게 되면 enable 속성을 *True*로 변경해 주면서 수정 완료 버튼을 화면에 나타냅니다.
+
+```
+private fun enableChange(b : Boolean, vg : ViewGroup){
+    for(i in 0 until vg.childCount){
+        val child = vg.getChildAt(i)
+        child.isEnabled = b
+        if(child is AppBarLayout){
+            continue
+        }
+
+        if(child is ViewGroup){
+            enableChange(b , child)
+        }
+    }
+}
+```
+
+<p align="center"><img src="https://user-images.githubusercontent.com/55642709/88542896-21221980-d052-11ea-92b8-e42495aeb56d.PNG" width="30%"><img src="https://user-images.githubusercontent.com/55642709/88542978-3f881500-d052-11ea-96a5-e06d46d9d7ac.PNG"width="30%"></p>
+
+## 3. 후기 및 발전
+
+> #### **저번 앱잼보다 나아진 개발 실력, 그러나 아직은 아쉬운 마무리**
+
+&nbsp;&nbsp;저번 기수 앱잼 때보다는 확실히 더 나은 실력을 가지게 되었다고 느낀 프로젝트였습니다.  
+개발 속도도 많이 향상되었고, 다양한 문제에 직면했을 때 좀 더 수월하게 해결할 수 있는 능력을 갖추게 된 것 같습니다.  
+그러나 사소한 문제에 대해서 많은 삽질을 해서 시간을 뺏기는 경험을 하면서 아직까지는  
+코드의 전체적인 흐름과 뷰의 특성을 파악하는데 많은 노력이 필요하다는 것을 깨닫기도 했습니다.
+이번 프로젝트에서도 저번처럼 리드 개발자의 역할로써 팀원들을 이끌면서 진행했는데,  
+내 부분을 만들기에 급급했던 저번과는 달리 이번에는 팀원들의 모르는 부분을 피드백 해주는 것과 동시에 개발하면서 터득한 나만의 팁을 공유하면서 진행할 수 있어서  
+확실히 저번보다는 크게 발전했다라는 것을 느낄 수 있었습니다.
+
+> #### **최우수상 그리고 MVP, 하지만 아직 배울 점이 많은 단계**
+
+&nbsp;&nbsp;OUNCE 프로젝트는 최우수상이라는 우수한 성적을 거두었습니다. 그리고 개인적으로는 안드로이드 파트 MVP를 수상하면서 굉장히 성공적인 마무리를 했다고 볼 수 있습니다.  
+동시에 아직 좀 더 배워야 할 점이 많다는 것을 깨달았습니다. 이번 프로젝트를 통해 노가다성 코드를 줄이는 `style`의 사용, 외부 라이브러리를 사용할 때 정확한 사용법과 사용하는 이유의 명시, 수명주기를 생각하는 자세 등 개발적인 부분에서 많은 성장을 했습니다.  
+Git을 관리하는 법과 협업 프로젝트를 진행할 때의 방법에서도 많은 발전이 있었습니다.  
+GitFlow 적용, Project, Issue 관리 등 전보다 Git을 더 잘 활용하는 느낌을 많이 받았습니다.  
+이번 프로젝트를 통해 제가 더 공부해야할 부분들을 생각해 보았습니다.
+
+- MVVM 디자인 패턴 적용을 위한 `ViewModel`과 `LiveData` 공부
+
+- 백그라운드 작업을 위한 _코루틴_ 공부
+
+- 이중 클릭 방지, 로딩 창 등 디테일한 세부 사항 구현
+
+OUNCE 프로젝트에서 지난 프로젝트에 대한 아쉬웠던 부분들을 보완하여 좀 더 완성도 높은 앱을 만들 수 있었습니다.  
+이 모든 결과는 저 뿐만이 아니라 다른 15명의 팀원들의 노력이 없었다면 이루어낼 수 없었을 것입니다.  
+프로젝트가 끝난 지금 어느 정도 안드로이드 개발의 기본을 탄탄하게 가져갔다고 생각합니다.  
+이제는 좀 더 심화된 부분까지 다룰 수 있는 멋진 안드로이드 개발자가 되겠습니다.
