@@ -8,3 +8,5 @@
 - [2020 Naver HACKDAY(2020.05.03 ~ 2020.05.24)](https://github.com/kangmin1012/Portfolio/blob/master/2020NAVERHACKDAY.pdf)
 
 - [OUNCE 프로젝트(2020.06.28 ~ 2020.07.18)](https://github.com/kangmin1012/Portfolio/blob/master/OUNCE.md)
+
+- [생글 프로젝트 (2020,08.1 ~ )](https://github.com/SangleProject/Sangle_Android/tree/develop)
